@@ -304,11 +304,15 @@ Salidas reales del sistema en [docs/evidencias.md](docs/evidencias.md) y captura
 
 > Antes de añadir más capturas: difuminar o eliminar IPs públicas, dominios, tokens, IDs de Tailscale, direcciones MAC, claves Wi-Fi, credenciales, nombres de dispositivos personales y cualquier información de domótica que revele horarios o presencia en casa.
 
+Capturas recientes (4 de octubre de 2026, saneadas):
+
+| Panel «Servidor» en Home Assistant | Panel de Pi-hole |
+|---|---|
+| ![Panel Servidor](docs/img/panel-servidor-home-assistant.png) | ![Panel Pi-hole](docs/img/panel-pihole.png) |
+
 Capturas sugeridas pendientes:
 
-1. Diagrama de arquitectura creado con draw.io, Excalidraw o Mermaid.
-2. Dashboard de Home Assistant (panel «Servidor») con entidades anonimizadas.
-3. Tareas de copia y verificación de Proxmox Backup Server.
+1. Tareas de copia y verificación de Proxmox Backup Server.
 4. Salida de `sensors` sin información sensible.
 5. Captura de Tailscale con nombres e IPs de tailnet ocultos.
 
