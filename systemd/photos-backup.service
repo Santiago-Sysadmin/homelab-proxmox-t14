@@ -1,0 +1,10 @@
+[Unit]
+Description=Copia incremental cifrada de la biblioteca de Immich al disco de copias
+RequiresMountsFor=/mnt/backup
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/photos-backup.sh
+Nice=15
+IOSchedulingClass=idle

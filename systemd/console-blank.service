@@ -1,0 +1,12 @@
+[Unit]
+Description=Apagar la pantalla de la consola tras 1 minuto sin uso
+After=getty@tty1.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+TimeoutStartSec=15
+ExecStart=/bin/sh -c 'TERM=linux timeout 5 setterm --blank 1 --powerdown 1 > /dev/tty1 < /dev/null'
+
+[Install]
+WantedBy=multi-user.target

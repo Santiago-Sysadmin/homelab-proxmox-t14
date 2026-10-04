@@ -1,0 +1,10 @@
+[Unit]
+Description=Publicar sensores del servidor en Home Assistant cada 2 minutos
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=2min
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target

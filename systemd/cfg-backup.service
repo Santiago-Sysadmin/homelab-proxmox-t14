@@ -1,0 +1,8 @@
+[Unit]
+Description=Copia de la configuracion de Proxmox y Pi-hole al disco de copias
+RequiresMountsFor=/mnt/backup
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/cfg-backup.sh
+Nice=10

@@ -1,0 +1,8 @@
+[Unit]
+Description=Publicar sensores del servidor en Home Assistant
+After=network-online.target
+
+[Service]
+Type=oneshot
+Nice=10
+ExecStart=/usr/local/sbin/ha-sensors.sh
