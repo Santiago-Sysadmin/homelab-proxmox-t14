@@ -1,8 +1,24 @@
 # Homelab de infraestructura doméstica con Proxmox VE
 
+[![ShellCheck](https://github.com/Santiago-Sysadmin/homelab-proxmox-t14/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/Santiago-Sysadmin/homelab-proxmox-t14/actions/workflows/shellcheck.yml)
+
 > Proyecto personal de administración de sistemas, virtualización, servicios de red y automatización doméstica.
 >
 > **Estado:** operativo y en evolución · **Entorno:** Cabanes, Comunidad Valenciana · **Última actualización:** octubre de 2026
+
+## En 30 segundos
+
+**ES —** Servidor doméstico 24/7 sobre un portátil ThinkPad con **Proxmox VE** que aloja DNS/DHCP (Pi-hole), domótica local (Home Assistant + Zigbee), una nube de fotos privada (Immich) y acceso remoto por VPN. Lo he diseñado, migrado y operado yo, con **copias automáticas verificadas**, **monitorización con alertas al móvil**, resiliencia ante cortes de luz y buenas prácticas de seguridad.
+
+**EN —** A 24/7 home server running on a ThinkPad laptop with **Proxmox VE**, hosting network-wide DNS/DHCP (Pi-hole), local home automation (Home Assistant + Zigbee), a private photo cloud (Immich) and VPN remote access. I designed, migrated and operate it, with **automated and tested backups** (Proxmox Backup Server + restic), **monitoring with mobile alerts**, power-outage handling and a hardened, segmented setup. Documentation is in Spanish; scripts are commented in Spanish.
+
+| Qué demuestra / What it shows | Dónde verlo / Where |
+|---|---|
+| Copias 3-2-1 parciales, cifradas y probadas | [Guía de recuperación](docs/recuperacion-desastres.md) · [Registro de pruebas](docs/prueba-restauracion.md) |
+| Operación real, no solo instalación | [Salidas reales del sistema](docs/evidencias.md) |
+| Bash/Python, systemd, APIs REST y webhooks | [`scripts/`](scripts) · [`systemd/`](systemd) · [Cómo desplegarlos](docs/instalacion.md) |
+| Monitorización y alertas | [Home Assistant](https://github.com/Santiago-Sysadmin/homelab-home-assistant) |
+| DNS/DHCP y migración sin cortes | [Pi-hole](https://github.com/Santiago-Sysadmin/homelab-pihole) |
 
 ## Resumen
 
@@ -39,41 +55,32 @@ La plataforma proporciona filtrado DNS y DHCP a nivel de red, automatización do
 
 ## Arquitectura
 
-```text
-Internet
-   │
-Router doméstico (DHCP desactivado) / LAN privada
-   │
-   ├── Proxmox VE — ThinkPad T14 Gen 2
-   │   ├── LXC Pi-hole
-   │   │   └── DNS, listas de bloqueo y servidor DHCP de toda la red
-   │   │
-   │   ├── VM Home Assistant OS
-   │   │   ├── Automatizaciones domésticas locales
-   │   │   ├── Integración ZHA + Matter/Alexa
-   │   │   ├── Sonoff Zigbee USB por passthrough
-   │   │   └── Alertas del servidor (sensores, avisos al móvil)
-   │   │
-   │   ├── VM Immich
-   │   │   └── Nube de fotos privada (importación desde Google Fotos)
-   │   │
-   │   ├── VM de laboratorio en red aislada
-   │   │   └── Segmentada del resto de la LAN y del host
-   │   │
-   │   ├── Proxmox Backup Server (en el propio host, datastore en disco USB)
-   │   │
-   │   ├── VM OpenMediaVault [pendiente]
-   │   │   └── NAS / SMB / almacenamiento multimedia mediante disco dedicado
-   │   │
-   │   └── Laboratorios y servicios futuros
-   │       ├── Containerlab / GNS3 / MikroTik CHR
-   │       ├── Rocky Linux / Windows Server
-   │       ├── Jellyfin
-   │       └── Monitorización
-   │
-   └── Tailscale
-       └── Acceso remoto privado a los servicios de casa
+```mermaid
+flowchart TB
+    NET([Internet]) --- RTR[Router doméstico<br/>DHCP desactivado]
+    RTR --- LAN{{LAN privada}}
+    LAN --- HOST
+
+    subgraph HOST["Proxmox VE · ThinkPad T14 Gen 2"]
+        direction TB
+        PH["LXC Pi-hole<br/>DNS + DHCP"]
+        HA["VM Home Assistant OS<br/>ZHA · Matter/Alexa · alertas"]
+        IM["VM Immich<br/>nube de fotos"]
+        LAB["VM de laboratorio<br/>red aislada"]
+        PBS[("Proxmox Backup Server<br/>datastore en disco USB")]
+        OMV["VM OpenMediaVault<br/>(pendiente)"]
+    end
+
+    USB[/"Disco USB de copias<br/>PBS + restic + config"/]
+    ZB(["Dongle Zigbee USB"]) -. passthrough .-> HA
+    HA -->|avisos| PHONE([Móvil])
+    PH -. DNS/DHCP .-> LAN
+    HOST -->|copias diarias| USB
+    TS[Tailscale] --- HOST
+    PHONE2([Móvil fuera de casa]) -->|VPN| TS
 ```
+
+Leyenda: las flechas discontinuas son dependencias de hardware o de servicio; el disco USB de copias es independiente del NVMe interno.
 
 > Documentación detallada por servicio en repositorios específicos:
 > [`homelab-home-assistant`](https://github.com/Santiago-Sysadmin/homelab-home-assistant) · [`homelab-pihole`](https://github.com/Santiago-Sysadmin/homelab-pihole).
@@ -157,7 +164,7 @@ Estrategia en capas, con todo automatizado mediante timers de systemd:
 
 - Proxmox Backup Server instalado en el propio host con el datastore en un disco USB independiente del NVMe.
 - Las copias de fotos excluyen miniaturas y vídeo transcodificado (Immich los regenera) y conservan originales, volcados de la base de datos y perfiles.
-- Prueba de restauración real realizada con una de las máquinas virtuales.
+- Prueba de restauración real realizada con una de las máquinas virtuales ([registro](docs/prueba-restauracion.md)) y [guía de recuperación](docs/recuperacion-desastres.md) escrita.
 - Las unidades systemd están en [`systemd/`](systemd/).
 - Pendiente: copia fuera de casa (hoy todas las copias están en el mismo domicilio) — ver «Próximas fases».
 
@@ -209,6 +216,8 @@ El portátil funciona como SAI básico. Dos servicios propios en Bash (con `Rest
 ```text
 .
 ├── README.md
+├── docs/          # Recuperación ante desastres, pruebas de restauración, evidencias, instalación
+├── .github/       # Análisis automático de los scripts (ShellCheck)
 ├── scripts/       # Scripts propios del host (copias, sensores, vigilancia)
 ├── systemd/       # Servicios y timers que los ejecutan
 └── config/
@@ -259,7 +268,8 @@ OpenMediaVault se desplegará como VM dedicada. El sistema operativo usará un d
 - [ ] Ampliar la memoria a 24 GB con un SODIMM DDR4-3200 de 16 GB y reajustar los guests.
 - [ ] Activar el encendido automático tras corte de luz en la BIOS.
 - [ ] Copia de seguridad fuera de casa (regla 3-2-1 completa) y valoración de cifrado del datastore PBS.
-- [ ] Prueba de restauración periódica (mensual) y guía de recuperación ante desastres escrita.
+- [x] Guía de recuperación ante desastres escrita y primera prueba de restauración registrada.
+- [ ] Prueba de restauración periódica (mensual) y simulacro completo de recuperación con medición del tiempo.
 - [ ] Desplegar OpenMediaVault como VM independiente.
 - [ ] Añadir disco SSD/HDD dedicado al NAS mediante passthrough persistente.
 - [ ] Configurar sistema de archivos, usuarios, permisos y recursos SMB/CIFS.
@@ -287,7 +297,7 @@ OpenMediaVault se desplegará como VM dedicada. El sistema operativo usará un d
 
 ## Evidencias
 
-Capturas incluidas en el repositorio:
+Salidas reales del sistema en [docs/evidencias.md](docs/evidencias.md) y capturas incluidas en el repositorio:
 
 - [`proxmox-resource-overview.png`](proxmox-resource-overview.png): vista de recursos de Proxmox.
 - [`pihole-dns-dashboard.png`](pihole-dns-dashboard.png): panel de Pi-hole.
