@@ -313,8 +313,8 @@ Capturas recientes (4 de octubre de 2026, saneadas):
 Capturas sugeridas pendientes:
 
 1. Tareas de copia y verificación de Proxmox Backup Server.
-4. Salida de `sensors` sin información sensible.
-5. Captura de Tailscale con nombres e IPs de tailnet ocultos.
+2. Salida de `sensors` sin información sensible.
+3. Captura de Tailscale con nombres e IPs de tailnet ocultos.
 
 ## Autor
 
