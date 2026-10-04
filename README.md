@@ -15,7 +15,7 @@
 | Qué demuestra / What it shows | Dónde verlo / Where |
 |---|---|
 | Copias 3-2-1 parciales, cifradas y probadas | [Guía de recuperación](docs/recuperacion-desastres.md) · [Registro de pruebas](docs/prueba-restauracion.md) |
-| Operación real, no solo instalación | [Salidas reales del sistema](docs/evidencias.md) |
+| Operación real, no solo instalación | [Salidas y capturas reales](docs/evidencias.md) · [Registro de incidencias](docs/incidencias.md) |
 | Bash/Python, systemd, APIs REST y webhooks | [`scripts/`](scripts) · [`systemd/`](systemd) · [Cómo desplegarlos](docs/instalacion.md) |
 | Monitorización y alertas | [Home Assistant](https://github.com/Santiago-Sysadmin/homelab-home-assistant) |
 | DNS/DHCP y migración sin cortes | [Pi-hole](https://github.com/Santiago-Sysadmin/homelab-pihole) |

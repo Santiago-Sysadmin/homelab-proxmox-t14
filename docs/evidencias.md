@@ -80,3 +80,31 @@ config-20261004-033001.tar.gz
 config-20261002-013855.tar.gz
 config-20261002-013224.tar.gz
 ```
+
+## Capturas (4 de octubre de 2026)
+
+Recortadas para mostrar solo los datos relevantes; sin direcciones ni usuarios.
+
+**Proxmox VE — máquinas y almacenamientos**
+
+![Recursos de Proxmox VE](img/pve-recursos.png)
+
+**Proxmox VE — trabajos de copia programados** (03:00 para una VM, 04:00 para el resto; retención diaria y semanal)
+
+![Trabajos de respaldo](img/pve-trabajos-de-respaldo.png)
+
+**Proxmox Backup Server — resumen del host y del almacén de copias**
+
+![Resumen de PBS](img/pbs-resumen-host-y-datastore.png)
+
+![Datastore usb](img/pbs-datastore-usb.png)
+
+**Proxmox Backup Server — todas las copias verificadas (`All OK`)**
+
+![Contenido del datastore](img/pbs-contenido-verificado.png)
+
+**Proxmox Backup Server — resumen de tareas de 30 días** (copias y verificación sin fallos)
+
+![Resumen de tareas](img/pbs-resumen-de-tareas.png)
+
+> Las incidencias encontradas al preparar estas capturas están en [`incidencias.md`](incidencias.md).
