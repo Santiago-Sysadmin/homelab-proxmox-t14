@@ -8,16 +8,16 @@
 
 ## En 30 segundos
 
-**ES —** Servidor doméstico 24/7 sobre un portátil ThinkPad con **Proxmox VE** que aloja DNS/DHCP (Pi-hole), domótica local (Home Assistant + Zigbee), una nube de fotos privada (Immich) y acceso remoto por VPN. Lo he diseñado, migrado y operado yo, con **copias automáticas verificadas**, **monitorización con alertas al móvil**, resiliencia ante cortes de luz y buenas prácticas de seguridad.
+**ES —** Servidor doméstico 24/7 sobre un portátil ThinkPad con **Proxmox VE** que aloja el DNS/DHCP de toda la red (Pi-hole), una nube de fotos privada (Immich), un contenedor con Claude Code y acceso remoto por VPN. Lo he diseñado, migrado y operado yo, con **copias automáticas verificadas**, resiliencia ante cortes de luz y de Internet y buenas prácticas de seguridad. Home Assistant + Zigbee formaron parte del servidor hasta octubre de 2026 (ver [«Histórico»](#histórico-home-assistant-y-zigbee-retirados-en-octubre-de-2026)).
 
-**EN —** A 24/7 home server running on a ThinkPad laptop with **Proxmox VE**, hosting network-wide DNS/DHCP (Pi-hole), local home automation (Home Assistant + Zigbee), a private photo cloud (Immich) and VPN remote access. I designed, migrated and operate it, with **automated and tested backups** (Proxmox Backup Server + restic), **monitoring with mobile alerts**, power-outage handling and a hardened, segmented setup. Documentation is in Spanish; scripts are commented in Spanish.
+**EN —** A 24/7 home server running on a ThinkPad laptop with **Proxmox VE**, hosting network-wide DNS/DHCP (Pi-hole), a private photo cloud (Immich), a Claude Code container and VPN remote access. I designed, migrated and operate it, with **automated and tested backups** (Proxmox Backup Server + restic), power- and internet-outage handling and a hardened, segmented setup. Home Assistant + Zigbee ran on it until October 2026 (see «Histórico»). Documentation is in Spanish; scripts are commented in Spanish.
 
 | Qué demuestra / What it shows | Dónde verlo / Where |
 |---|---|
 | Copias 3-2-1 parciales, cifradas y probadas | [Guía de recuperación](docs/recuperacion-desastres.md) · [Registro de pruebas](docs/prueba-restauracion.md) |
 | Operación real, no solo instalación | [Salidas y capturas reales](docs/evidencias.md) · [Registro de incidencias](docs/incidencias.md) |
 | Bash/Python, systemd, APIs REST y webhooks | [`scripts/`](scripts) · [`systemd/`](systemd) · [Cómo desplegarlos](docs/instalacion.md) |
-| Monitorización y alertas | [Home Assistant](https://github.com/Santiago-Sysadmin/homelab-home-assistant) |
+| Monitorización y alertas (etapa con Home Assistant, retirada) | [Home Assistant](https://github.com/Santiago-Sysadmin/homelab-home-assistant) |
 | DNS/DHCP y migración sin cortes | [Pi-hole](https://github.com/Santiago-Sysadmin/homelab-pihole) |
 
 ## Resumen
@@ -31,7 +31,7 @@ La plataforma proporciona filtrado DNS y DHCP a nivel de red, automatización do
 - Sustituir hardware antiguo por una plataforma x86 moderna y de bajo consumo.
 - Eliminar la dependencia de Umbrel para servicios que pueden ejecutarse de forma nativa y estándar.
 - Separar servicios mediante virtualización para facilitar actualizaciones, snapshots, recuperación y ampliación.
-- Mantener la continuidad de Pi-hole, Home Assistant y la red Zigbee ya desplegada.
+- Mantener la continuidad de Pi-hole y, en su momento, de Home Assistant y la red Zigbee (estos dos últimos, retirados del servidor en octubre de 2026; ver «Histórico»).
 - Habilitar administración remota privada sin exponer servicios de administración al Internet público.
 - Proteger los datos (configuración, máquinas virtuales y fotos) con copias automáticas, cifradas y verificadas.
 - Detectar y comunicar problemas (cortes de luz, caídas de red, discos llenos, copias atrasadas) sin tener que mirar el servidor.
@@ -57,23 +57,23 @@ La plataforma proporciona filtrado DNS y DHCP a nivel de red, automatización do
 
 ```mermaid
 flowchart TB
-    NET([Internet]) --- RTR[Router doméstico<br/>DHCP desactivado]
-    RTR --- LAN{{LAN privada}}
+    NET([Internet]) --- ONT[Router del operador<br/>solo hace de ONT]
+    ONT --- LAN{{LAN privada}}
     LAN --- HOST
+    LAN --- AP["2 × Acer Wave 7<br/>Wi-Fi en modo bridge"]
 
     subgraph HOST["Proxmox VE · ThinkPad T14 Gen 2"]
         direction TB
         PH["LXC Pi-hole<br/>DNS + DHCP"]
-        HA["VM Home Assistant OS<br/>ZHA · Matter/Alexa · alertas"]
         IM["VM Immich<br/>nube de fotos"]
+        CC["LXC Claude Code<br/>CT105"]
         LAB["VM de laboratorio<br/>red aislada"]
         PBS[("Proxmox Backup Server<br/>datastore en disco USB")]
         OMV["VM OpenMediaVault<br/>(pendiente)"]
     end
 
     USB[/"Disco USB de copias<br/>PBS + restic + config"/]
-    ZB(["Dongle Zigbee USB"]) -. passthrough .-> HA
-    HA -->|avisos| PHONE([Móvil])
+    PHONE([Móvil]) -->|acceso| CC
     PH -. DNS/DHCP .-> LAN
     HOST -->|copias diarias| USB
     TS[Tailscale] --- HOST
@@ -95,6 +95,8 @@ Leyenda: las flechas discontinuas son dependencias de hardware o de servicio; el
 - Pi-hole v6 (DNS + DHCP)
 - Immich, restic (copias cifradas e incrementales)
 - Tailscale (subnet routing)
+- Claude Code en LXC, acceso desde el móvil
+- Failover de Internet por USB tethering (NAT con `iptables`, IP forwarding)
 - Firewall, protección frente a fuerza bruta y SSH endurecido
 - Linux CLI, Bash, Python 3, APT, systemd (services y timers), sysctl, TLP, `lm-sensors`
 - API REST y webhooks de Home Assistant, Telegram/notificaciones móviles
@@ -128,6 +130,8 @@ Leyenda: las flechas discontinuas son dependencias de hardware o de servicio; el
 - Orden de arranque (`startup order`) para que Pi-hole y Home Assistant estén disponibles antes que el resto tras un reinicio.
 
 ### 3. Migración de Home Assistant y Zigbee
+
+> **Actualización de octubre de 2026:** Home Assistant ya no forma parte del servidor. Esta sección describe la etapa anterior; ver [«Histórico»](#histórico-home-assistant-y-zigbee-retirados-en-octubre-de-2026).
 
 - Creación de backup completo de Home Assistant antes de la migración.
 - Despliegue de Home Assistant OS como VM independiente en Proxmox.
@@ -170,6 +174,8 @@ Estrategia en capas, con todo automatizado mediante timers de systemd:
 
 ### 6. Monitorización y alertas
 
+> **Actualización de octubre de 2026:** los sensores, las automatizaciones y las alertas de esta sección dependían de Home Assistant, que se retiró del servidor. Los scripts siguen en [`scripts/`](scripts) como referencia y su sustituto está pendiente de definir.
+
 - Verificación de CPU, memoria, uso de disco, swap y retardo de I/O desde la interfaz Proxmox.
 - Sensores del servidor publicados en Home Assistant cada 2 minutos mediante la API REST ([`scripts/ha-sensors.sh`](scripts/ha-sensors.sh)): temperatura de CPU y NVMe, batería, si está enchufado, espacio libre para VMs y copias, y antigüedad de la última copia de cada máquina y de las fotos.
 - Integración nativa `proxmoxve` de Home Assistant con un usuario de solo lectura (rol `PVEAuditor`) y token de API dedicado, con el principio de mínimo privilegio.
@@ -210,6 +216,26 @@ El portátil funciona como SAI básico. Dos servicios propios en Bash (con `Rest
 - **Reducción de superficie:** servicios innecesarios deshabilitados y acceso remoto solo mediante VPN mesh.
 - **Memoria bajo control:** tras un cuelgue de una VM por falta de RAM se reajustaron los mínimos de ballooning por guest y se añadió swap; se documentó el límite hasta ampliar la memoria física.
 - **Secretos fuera del repositorio:** tokens, claves y el identificador del webhook se guardan en ficheros con permisos restringidos en el host.
+
+### 10. Red doméstica: el router del operador solo hace de ONT
+
+- El router del operador solo hace de **ONT**: el **DHCP y el DNS de toda la red** los sirve el propio servidor (Pi-hole), de modo que cada equipo aparece por nombre en las consultas.
+- La cobertura Wi-Fi la dan **dos Acer Wave 7 en modo bridge**, uno junto al router, conectado por cable. Así hay una sola red y un solo DHCP.
+- Pendiente: tirar un cable cat6 a la planta de arriba para conectar el segundo punto por cable en lugar de por radio.
+
+### 11. Claude Code en un LXC (CT105)
+
+- Contenedor LXC (CT105) que ejecuta **Claude Code**, al que se accede desde el móvil para trabajar en distintos proyectos.
+- Al ser un guest más del host, comparte la memoria limitada del servidor (ver «Memoria bajo control»).
+
+## Histórico: Home Assistant y Zigbee (retirados en octubre de 2026)
+
+Hasta octubre de 2026 el servidor alojó **Home Assistant OS** (VM) con Zigbee (ZHA), integración con Alexa por Matter y un sistema de alertas al móvil. En octubre de 2026 se retiró del servidor. Lo que queda de aquella etapa:
+
+- Las secciones 3 y 6 describen cómo se desplegó y se monitorizó.
+- Los scripts `ha-sensors.sh` y su temporizador publicaban métricas en Home Assistant; quedan como referencia.
+- El coordinador Zigbee USB se conserva y la domótica pasó a gestionarse con una aplicación propia.
+- La monitorización con alertas al móvil queda pendiente de sustituir (ver «Próximas fases»).
 
 ## Estructura del repositorio
 
@@ -265,6 +291,8 @@ OpenMediaVault se desplegará como VM dedicada. El sistema operativo usará un d
 - [x] Copias de seguridad automáticas de máquinas, configuración y fotos, con verificación periódica.
 - [x] Monitorización básica con alertas al móvil (Home Assistant + sensores propios).
 - [x] Endurecimiento del acceso de administración y segmentación de las VMs de laboratorio.
+- [ ] Sustituir la monitorización y las alertas al móvil que dependían de Home Assistant.
+- [ ] Cable cat6 a la planta de arriba para el segundo punto Wi-Fi.
 - [ ] Ampliar la memoria a 24 GB con un SODIMM DDR4-3200 de 16 GB y reajustar los guests.
 - [ ] Activar el encendido automático tras corte de luz en la BIOS.
 - [ ] Copia de seguridad fuera de casa (regla 3-2-1 completa) y valoración de cifrado del datastore PBS.
@@ -284,7 +312,7 @@ OpenMediaVault se desplegará como VM dedicada. El sistema operativo usará un d
 - Administración de Linux y servicios de infraestructura.
 - Virtualización con Proxmox, KVM/QEMU y LXC.
 - Diseño e implantación de copias de seguridad con Proxmox Backup Server y restic, incluida verificación y prueba de restauración.
-- Diagnóstico de red: conectividad IPv4, DHCP, DNS y routing; migración del DHCP del router a Pi-hole.
+- Diagnóstico de red: conectividad IPv4, DHCP, DNS, routing y NAT; migración del DHCP del router a Pi-hole y failover temporal de Internet por datos móviles ([incidencia](docs/incidencias.md)).
 - Gestión de DNS y DHCP a nivel de red con Pi-hole.
 - Automatización doméstica local con Home Assistant, ZHA y Matter.
 - Scripting en Bash y Python, servicios y timers de systemd, integración con APIs REST y webhooks.
