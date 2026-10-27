@@ -2,6 +2,17 @@
 
 Problemas reales encontrados en el sistema, su causa y cómo se resolvieron. Mantenerlo es parte de operar el servidor: las copias y las alertas solo valen si se revisan.
 
+## 2026-10-16 — Caída de la fibra: salida temporal a Internet por datos móviles
+
+| | |
+|---|---|
+| **Qué pasó** | La fibra del operador dejó de funcionar y la reparación se retrasó cerca de una semana. El router solo hace de ONT y el servidor es el DHCP/DNS de la red, así que sin salida a Internet el servidor, la VM aislada y la VPN se quedaban sin conexión. |
+| **Solución temporal** | Un móvil antiguo con una SIM de datos como módem por **USB tethering** conectado al servidor. Se eliminó la ruta por defecto hacia el router sin fibra y se añadió una nueva por la interfaz del móvil (por DHCP). Con **IP forwarding** y **NAT (masquerade)** en `iptables` salieron también el resto de la casa y las VMs, y el DHCP repartió como puerta de enlace al propio servidor. |
+| **Verificación** | Ping por IP y por nombre, y comprobación de que la IP pública de salida era la del móvil. Tailscale siguió funcionando sin abrir puertos, pese al CGNAT de la red móvil. |
+| **Decisión de diseño** | Todo se hizo **solo en memoria**, sin tocar `/etc/network/interfaces`, para que un reinicio devolviera la configuración guardada. Lo único persistente era la puerta de enlace del DHCP, que había que revertir a mano. |
+| **Reversión** | Con la fibra restablecida: quitar la ruta del móvil, restaurar la del router, borrar la regla NAT, liberar la concesión DHCP de la interfaz, devolver la puerta de enlace original en el DHCP y retirar el móvil. El IP forwarding se deja activo porque la VM aislada puede necesitarlo. |
+| **Lección** | Un servidor que concentra DHCP y DNS depende de tener una salida a Internet: conviene dejar documentado el procedimiento de failover y de vuelta atrás **antes** de necesitarlo. Durante la caída apareció un trabajo de copia en rojo en Proxmox: conviene revisar su registro con la conexión estable para descartar otra causa. |
+
 ## 2026-10-04 — Las copias terminaban cada día con «job errors»
 
 | | |
